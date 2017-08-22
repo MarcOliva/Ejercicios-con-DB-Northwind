@@ -1,0 +1,95 @@
+
+/*PD09-1*/
+select c.CustomerID , c.CompanyName
+from Customers c join Orders o on c.CustomerID=o.CustomerID 
+where ShippedDate is null
+/*PD09-2*/
+select c.CustomerID , c.CompanyName,COUNT(c.CustomerID)as cantidad
+from Customers c join Orders o on c.CustomerID=o.CustomerID 
+where ShippedDate is null
+group by c.CustomerID , c.CompanyName
+having COUNT(c.CustomerID)>=2
+
+/*PD09-3*/
+select ShipCountry ,ShipCity, ShipPostalCode, COUNT(ShipCountry)
+from Orders o join Customers c on o.CustomerID= c.CustomerID
+where ShippedDate is null and (City<>ShipCity or PostalCode<>ShipPostalCode) 
+group by ShipCountry ,ShipCity, ShipPostalCode
+
+/*PD09-4*/
+select ID, CoName
+from Orders o join Shippers s on o.ShipVia= s.ID
+where ShipCountry='Mexico' and ShippedDate BETWEEN '19980101' and '19980228'
+
+/*PD09-5*/
+select e.First ,e.Last , j.First,j.Last
+from Employees e join Employees j on e.ReportsTo=j.ID
+
+/*PD09-6*/
+select e.Country,YEAR(o.OrderDate),sum(Quantity*UnitPrice) as monto_venta
+from Orders o join Employees e on o.EmployeeID=e.ID
+		join [Order Details] od on o.OrderID=od.ID
+group by  e.Country,YEAR(o.OrderDate)
+
+
+/*PD10-1*/
+select OrderID,CustomerID,OrderDate,ShippedDate,
+DATEDIFF(day,OrderDate,ShippedDate)as Diferencia_dias , 
+DATEDIFF(WEEK,OrderDate,ShippedDate)as Diferencia_semanas,
+DATEDIFF(MONTH,OrderDate,ShippedDate) as Diferencia_meses
+from Orders
+where  DATEDIFF(WEEK,OrderDate,ShippedDate)>4
+
+/*PD10-2*/
+select j.ID,j.last,YEAR(OrderDate),MONTH(OrderDate),sum(Quantity*UnitPrice*(1-Discount)) as monto_ventas,sum(Quantity*UnitPrice*(1-Discount))*0.005 as comision
+from [Order Details] od join Orders o on od.ID=o.OrderID
+						join Employees e on o.EmployeeID=e.ID
+						join Employees j on e.ReportsTo=j.ID
+group by j.ID,j.last,YEAR(OrderDate),MONTH(OrderDate)
+
+/*PD10-3*/
+select ShipCountry,Year(OrderDate),sum(Quantity*UnitPrice) as importe
+from Orders o join [Order Details] od on od.ID=o.OrderID
+where ShippedDate is not null
+group by ShipCountry,Year(OrderDate)
+having sum(Quantity*UnitPrice)>45000
+
+/*PD10-4*/
+select p.ID,p.ProdName,SUM(od.Quantity) Q_Vendidas,
+		COUNT(o.OrderID) Q_Ordenes
+from Orders o join [Order Details] od on o.OrderID=od.ID
+join Products p on p.ID=od.ProductID
+where YEAR(o.OrderDate)=1995
+group by p.ID,p.ProdName
+having COUNT(o.OrderID)>=20
+
+
+/*PD10-5*/
+
+select p.ProdName,sum(Quantity)as cantidad_pendiente,UnitsInStock,sum(Quantity)-UnitsInStock as stock_faltante
+from Orders o join [Order Details] od on o.OrderID=od.ID
+join Products p on p.ID=od.ProductID
+where ShippedDate is null and p.Discontinued=0
+group by p.ProdName,UnitsInStock
+having UnitsInStock<sum(Quantity)
+
+/*PD10-6*/
+select ProdName,p.UnitPrice,(select AVG(p2.UnitPrice) FROM Products p2) as Promedio 
+from Products p
+where  p.Discontinued=1 and UnitPrice<(select AVG(p2.UnitPrice) FROM Products p2)
+
+/*PD10-7*/
+select *
+from Orders
+where DATEDIFF(day,ShippedDate,OrderDate)>(select AVG(DATEDIFF(day,o.ShippedDate,o.OrderDate)) from Orders o) and
+DATEDIFF(WEEK,ShippedDate,OrderDate) >(select AVG(DATEDIFF(WEEK,o.ShippedDate,o.OrderDate)) from Orders o)
+
+/*PD10-8*/
+select p.ID,ProdName,c.CatName, UnitPrice
+from Products p join Categories c on p.CategoryID=c.ID
+where p.Discontinued=0 and UnitPrice>(select AVG(pr.UnitPrice)
+			from Products pr
+			where pr.CategoryID=p.CategoryID
+			)
+
+/*PD10-9*/
